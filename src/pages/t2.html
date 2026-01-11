@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HOLMER Service Code Calculator (Terra Dos T2)</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        label, input, select, button { display: block; margin-bottom: 15px; }
+        input[type="text"] { width: 100%; padding: 10px; box-sizing: border-box; font-size: 1.2em; text-align: center; }
+        select { width: 100%; padding: 10px; box-sizing: border-box; font-size: 1em; }
+        #output { font-weight: bold; font-size: 1.8em; color: green; text-align: center; border: 2px solid #333; padding: 15px; background-color: #e9ffe9; border-radius: 4px; }
+        #warnings { color: red; margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>HOLMER Service Code Calculator (T2)</h2>
+
+    <label for="inputCode">Enter 5-Digit Service Code:</label>
+    <input type="text" id="inputCode" maxlength="5" value="12345" oninput="validateAndCalculate()">
+
+    <label for="calcSelect">Select Calculation Mode:</label>
+    <select id="calcSelect" onchange="validateAndCalculate()">
+        <option value="T2_01">T2_01 (Service access, model years 1996–2001)</option>
+        <option value="T2_02">T2_02 (Service access, built in 2002, SW)</option>
+        <option value="T2_03">T2_03 (Variable access from 2003 SW)</option>
+        <option value="T2_03_1">T2_03_1 (Service access from 2003 SW)</option>
+    </select>
+
+    <div id="warnings"></div>
+
+    <label>Generated Code:</label>
+    <div id="output"></div>
+
+    <script>
+        // --- C# Class Members Simulation ---
+        let ServiAusg = 0.0;
+        let ServiZall = 0.0;
+        let ServiQuer = 0;
+        const ErrPas = 0; // Assumed 0 for non-error path
+
+        /**
+         * 1. SIMULATION of Textfeldabf()
+         * Converts the input string into a numerical array of digits.
+         */
+        function simulate_Textfeldabf(inputString) {
+            // C# Conversion.Val returns numbers, not characters.
+            return inputString.split('').map(char => parseInt(char, 10));
+        }
+
+        /**
+         * 2. SIMULATION of ermittl_Service_Zahl(ServiEing) - Numerator
+         * For T2 (5-digit input), this returns the full 5-digit number.
+         */
+        function ermittl_Service_Zahl(ServiEing) {
+            // Logic confirmed to be the full 5-digit number for T2.
+            ServiZall = parseFloat(ServiEing.join('')) + ErrPas;
+            return ServiZall;
+        }
+
+        /**
+         * 3. SIMULATION of ermittl_Service_QuerZahl(ServiEing) - Divisor
+         * Calculates the sum of all digits.
+         */
+        function ermittl_Service_QuerZahl(ServiEing) {
+            ServiQuer = ServiEing.reduce((sum, current) => sum + current, 0);
+            return ServiQuer;
+        }
+
+        /**
+         * 4. SIMULATION of valiAusg(DblausgWert, ref typ=1) - Formatter
+         * Accurately replicates the non-standard C# formatting for 5-digit output (typ=1).
+         * NOTE: C# uses Math.Round(Conversion.Fix(DblausgWert)). For positive numbers, this 
+         * simplifies to Math.trunc(DblausgWert).
+         */
+        function valiAusg(DblausgWert) {
+            // 1. Truncate decimal part
+            const num = Math.trunc(DblausgWert);
+            let text = String(num);
+            const num2 = num; 
+            const length = text.length;
+
+            // --- C# Logic for typ == 1 (5-Digit Output) ---
+            if (num2 <= 9) { // 1 digit
+                text = "0000" + text;
+            } else if (num2 <= 99) { // 2 digits
+                text = "000" + text;
+            } else if (num2 <= 999) { // 3 digits
+                text = "00" + text;
+            } else if (num2 <= 9999) { // 4 digits
+                text = "0" + text;
+            } 
+            // *** NON-STANDARD C# TRUNCATION/PADDING LOGIC FOR 5-DIGIT INPUTS ***
+            else if (num2 <= 99999) { // 5-digit raw results
+                // C# code: text = "0" + text[1] + text[2] + text[3] + text[4];
+                // Drops the first digit (text[0]) and prefixes with '0'.
+                if (length >= 5) {
+                    text = "0" + text.substring(1, 5); 
+                } else {
+                    // Fallback for unexpected lengths < 5 (should not happen here)
+                    text = text.padStart(5, '0');
+                }
+            } 
+            // For raw results 100000 and above (6+ digits)
+            else if (num2 >= 100000) { 
+                // C# code: text = "0" + text[2] + text[3] + text[4] + text[5];
+                // Drops text[0] and text[1], prefixes with '0'. Result is 5 digits.
+                if (length >= 6) {
+                     text = "0" + text.substring(2, 6);
+                } else {
+                     text = text.substring(length - 5, length).padStart(5, '0');
+                }
+            } else {
+                // Catches error cases defined in C#
+                text = "?????"; 
+            }
+
+            return text;
+        }
+
+
+        // --- Calculation Functions (Replicating C# Button Clicks) ---
+
+        function berechT2_01(ServiEing) { 
+            ServiZall = ermittl_Service_Zahl(ServiEing);
+            ServiQuer = ermittl_Service_QuerZahl(ServiEing);
+            ServiAusg = (ServiZall + 101.0) / ServiQuer;
+            return valiAusg(ServiAusg);
+        }
+
+        function berechT2_02(ServiEing) { 
+            ServiZall = ermittl_Service_Zahl(ServiEing);
+            ServiAusg = (ServiZall * 7.0) / 58.0;
+            return valiAusg(ServiAusg);
+        }
+
+        function berechT2_03(ServiEing) { 
+            ServiZall = ermittl_Service_Zahl(ServiEing);
+            ServiQuer = ermittl_Service_QuerZahl(ServiEing);
+            ServiAusg = (ServiZall * 13.0) / ServiQuer;
+            return valiAusg(ServiAusg);
+        }
+
+        function berechT2_03_1(ServiEing) { 
+            ServiZall = ermittl_Service_Zahl(ServiEing);
+            ServiQuer = ermittl_Service_QuerZahl(ServiEing);
+            ServiAusg = (ServiZall * 31.0) / ServiQuer;
+            return valiAusg(ServiAusg);
+        }
+
+        // --- Main Controller ---
+
+        const calcFunctions = {
+            'T2_01': berechT2_01, 'T2_02': berechT2_02, 'T2_03': berechT2_03, 'T2_03_1': berechT2_03_1
+        };
+
+        function validateAndCalculate() {
+            const inputElement = document.getElementById('inputCode');
+            const outputElement = document.getElementById('output');
+            const warningsElement = document.getElementById('warnings');
+            const calcSelect = document.getElementById('calcSelect');
+            const input = inputElement.value;
+            warningsElement.textContent = '';
+            outputElement.textContent = '??????';
+
+            if (input.length !== 5) {
+                warningsElement.textContent = `Error: Input must be exactly 5 digits for T2 calculations. (Current: ${input.length})`;
+                return;
+            }
+
+            const ServiEing = simulate_Textfeldabf(input);
+            const isAllZeros = ServiEing.every(digit => digit === 0);
+            if (isAllZeros) {
+                 warningsElement.textContent = "Error: Die Servicezahl darf nicht nur aus 0'en bestehen.";
+                 return;
+            }
+
+            const selectedCalc = calcSelect.value;
+            const result = calcFunctions[selectedCalc](ServiEing);
+            
+            if (result.startsWith("Error")) {
+                warningsElement.textContent = result;
+            } else {
+                outputElement.textContent = result;
+            }
+        }
+
+        // Initial calculation on load
+        document.addEventListener('DOMContentLoaded', validateAndCalculate);
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ropa</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <header>
+    <a href="index.html">← Home</a>
+    <div><strong>Ropa</strong> service codes</div>
+    <div></div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" id="tab1" type="button">Service code 1</button>
+        <button class="tab" id="tab2" type="button">Service code 2</button>
+        <button class="tab" id="swap" type="button">Switch</button>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="service">Input service code</label>
+          <input id="service" inputmode="numeric" autocomplete="off" placeholder="Input Service Code" />
+          <div class="msg" id="hint">Mode 1: output equals input digits.</div>
+        </div>
+        <div class="field">
+          <label>Result</label>
+          <div class="output" id="out">—</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="calc" type="button">Get Access Code</button>
+        <button class="btn secondary" id="reset" type="button">Retry</button>
+      </div>
+
+      <div class="msg error" id="err" style="display:none"></div>
+    </div>
+  </main>
+
+  <script src="assets/common.js"></script>
+  <script>
+    let mode = 1;
+    const tab1 = document.getElementById('tab1');
+    const tab2 = document.getElementById('tab2');
+    const swap = document.getElementById('swap');
+    const service = document.getElementById('service');
+    const out = document.getElementById('out');
+    const err = document.getElementById('err');
+    const hint = document.getElementById('hint');
+
+    function setMode(m){
+      mode = m;
+      tab1.classList.toggle('active', mode===1);
+      tab2.classList.toggle('active', mode===2);
+      hint.textContent = (mode===1)
+        ? 'Mode 1: output equals input digits.'
+        : 'Mode 2: Access Code = floor(n / sumDigits(n)).';
+      err.style.display = 'none';
+      out.textContent = '—';
+    }
+
+    tab1.addEventListener('click', ()=>setMode(1));
+    tab2.addEventListener('click', ()=>setMode(2));
+    swap.addEventListener('click', ()=>setMode(mode===1?2:1));
+
+    service.addEventListener('input', ()=>{ service.value = onlyDigits(service.value); });
+
+    function sumDigitsStr(numStr){
+      let sum = 0;
+      for (let i=0;i<numStr.length;i++) sum += Number(numStr[i]);
+      return sum;
+    }
+
+    function calculate(){
+      const s = onlyDigits(service.value);
+      if (!s){
+        err.textContent = 'Error';
+        err.style.display = 'block';
+        out.textContent = '—';
+        return;
+      }
+
+      if (mode === 1){
+        out.textContent = s;
+        err.style.display = 'none';
+        return;
+      }
+
+      const num = parseInt(s, 10);
+      const sum = sumDigitsStr(String(num));
+      if (sum === 0){
+        err.textContent = 'Error';
+        err.style.display = 'block';
+        out.textContent = '—';
+        return;
+      }
+      const result = Math.floor(num / sum);
+      out.textContent = String(result);
+      err.style.display = 'none';
+    }
+
+    function reset(){
+      service.value = '';
+      out.textContent = '—';
+      err.style.display = 'none';
+      service.focus();
+    }
+
+    document.getElementById('calc').addEventListener('click', calculate);
+    document.getElementById('reset').addEventListener('click', reset);
+
+    setMode(1);
+  </script>
+</body>
+</html>

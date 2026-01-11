@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Servicecode T3 Calculator</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; max-width: 760px; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    input { font-size: 18px; padding: 8px 10px; width: 200px; }
+    button { font-size: 16px; padding: 9px 12px; cursor: pointer; }
+    table { border-collapse: collapse; margin-top: 16px; width: 100%; }
+    td, th { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background: #f5f5f5; }
+    .err { color: #b00020; margin-top: 12px; }
+    code { background:#f6f6f6; padding:2px 6px; border-radius:6px; }
+  </style>
+</head>
+
+<body>
+  <h2>Servicecode T3</h2>
+
+  <div class="row">
+    <label for="inp"><b>Service number</b> (6 digits):</label>
+    <input id="inp" inputmode="numeric" autocomplete="off" placeholder="e.g. 340678" maxlength="6" />
+    <button id="btn" type="button">Calculate</button>
+    <button id="btn2" type="button">Reset</button>
+  </div>
+
+  <div id="err" class="err"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Code</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>T3v (Variables Access)</td><td><code id="outV">—</code></td></tr>
+      <tr><td>T3s (Service Access)</td><td><code id="outS">—</code></td></tr>
+      <tr><td>T3a (Equipment Code)</td><td><code id="outA">—</code></td></tr>
+      <tr><td>T3h (Hardware Exchange)</td><td><code id="outH">—</code></td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    // Algorithm matches Form1.cs for:
+    // berechT3v/berechT3s/berechT3a/berechT3h and valiAusg(typ=2).
+
+    function valiAusgTyp2(value) {
+      // VB Fix() then Math.Round(); for positive numbers Fix() == floor().
+      const num = Math.floor(value);
+      const s = String(num);
+
+      if (num <= 999) return "000" + s;
+      if (num <= 9999) return "00" + s;
+      if (num <= 99999) return "0" + s;
+      if (num <= 999999) return s;
+      if (num <= 9999999) return s.slice(1, 7); // 7 digits: drop first digit
+      return s.slice(2, 8);                     // 8+ digits: drop first two digits
+    }
+
+    function calcT3(service6) {
+      if (!/^\d{6}$/.test(service6)) {
+        throw new Error("Input must be exactly 6 digits.");
+      }
+
+      const d = service6.split("").map(ch => ch.charCodeAt(0) - 48);
+      const serviZall = parseInt(service6, 10);
+
+      const zV = d[0] + d[1] + d[4] + d[5]; // T3v: 234 / (d0+d1+d4+d5)
+      const zS = d[0] + d[1] + d[2];        // T3s: 456 / (d0+d1+d2)
+      const zA = d[3] + d[4] + d[5];        // T3a: 987 / (d3+d4+d5)
+      const zH = d[3] + d[4];               // T3h: 876 / (d3+d4)
+
+      if (zV === 0 || zS === 0 || zA === 0 || zH === 0) {
+        throw new Error("Invalid input (ZwiSum became 0).");
+      }
+
+      return {
+        T3v: valiAusgTyp2(serviZall * 234.0 / zV),
+        T3s: valiAusgTyp2(serviZall * 456.0 / zS),
+        T3a: valiAusgTyp2(serviZall * 987.0 / zA),
+        T3h: valiAusgTyp2(serviZall * 876.0 / zH)
+      };
+    }
+
+    const inp = document.getElementById("inp");
+    const err = document.getElementById("err");
+
+    const outV = document.getElementById("outV");
+    const outS = document.getElementById("outS");
+    const outA = document.getElementById("outA");
+    const outH = document.getElementById("outH");
+
+    function setOutputs(res) {
+      outV.textContent = res.T3v;
+      outS.textContent = res.T3s;
+      outA.textContent = res.T3a;
+      outH.textContent = res.T3h;
+    }
+
+    function clearOutputs() {
+      outV.textContent = "—";
+      outS.textContent = "—";
+      outA.textContent = "—";
+      outH.textContent = "—";
+    }
+
+    document.getElementById("btn").addEventListener("click", () => {
+      err.textContent = "";
+      try {
+        setOutputs(calcT3(inp.value.trim()));
+      } catch (e) {
+        clearOutputs();
+        err.textContent = e && e.message ? e.message : String(e);
+      }
+    });
+
+    document.getElementById("btn2").addEventListener("click", () => {
+      inp.value = "";
+      err.textContent = "";
+      clearOutputs();
+      inp.focus();
+    });
+
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("btn").click();
+    });
+
+    // Keep only digits while typing
+    inp.addEventListener("input", () => {
+      inp.value = inp.value.replace(/\D+/g, "").slice(0, 6);
+    });
+  </script>
+</body>
+</html>

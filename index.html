@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beautiful Offline Web App</title>
+    <meta property="og:image" content="https://bolt.new/static/og_default.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://bolt.new/static/og_default.png" />
+        <link rel="manifest" href="/servicecode/manifest.json" />
+    <meta name="theme-color" content="#10b981" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="ServiceCode" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  <script>
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    const installContainer = document.getElementById('installContainer');
+
+    // Detect beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('beforeinstallprompt event fired');
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Show install button/UI if element exists
+      if (installContainer) {
+        installContainer.style.display = 'block';
+      }
+      if (installBtn) {
+        installBtn.addEventListener('click', installApp);
+      }
+    });
+
+    // Handle app installation
+    function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('App installed');
+          } else {
+            console.log('App installation cancelled');
+          }
+          deferredPrompt = null;
+        });
+      }
+    }
+
+    // Register service worker for PWA support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/servicecode/sw.js', { scope: '/servicecode/' })
+        .then((registration) => {
+          console.log('Service Worker registered:', registration.scope);
+        })
+        .catch((error) => {
+          console.warn('Service Worker registration failed:', error);
+        });
+    } else {
+      console.warn('Service Workers not supported');
+    }
+  </script>
+    }
+  </script>
+  </body>
+</html>
