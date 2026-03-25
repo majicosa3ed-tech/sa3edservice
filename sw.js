@@ -3,8 +3,8 @@ const ASSETS_TO_CACHE = [
   '/sa3edservice/',
   '/sa3edservice/index.html',
   '/sa3edservice/manifest.json',
-  '/sa3edservice/assets/index-B_2xQolW.js',
-  '/sa3edservice/assets/index-D_Eq3Bgo.css'
+  '/sa3edservice/assets/index.js',
+  '/sa3edservice/assets/index.css'
 ];
 
 self.addEventListener('install', (event) => {
