@@ -4,7 +4,7 @@
 
 body {
   background-image: url('/intro.jpg');
-  background-size: cover;
+  background-size: contain;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
